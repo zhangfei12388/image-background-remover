@@ -1,81 +1,88 @@
 # 🖼️ 图片背景移除
 
-基于 Remove.bg API + Cloudflare Workers 的图片背景移除工具。
+> 基于 Next.js + Tailwind CSS + Remove.bg API 的图片背景移除工具。
+
+**技术栈：**
+- 前端：Next.js 15 (App Router) + Tailwind CSS
+- 后端：Next.js API Routes
+- AI 能力：Remove.bg API
+- 部署：Vercel / Cloudflare Pages
 
 **特点：**
+- 拖拽上传，即时预览
 - 纯内存处理，不做任何存储
-- 单个 Worker 搞定全部（页面 + API 代理）
-- 部署到 Cloudflare 全球边缘节点，访问速度快
+- 移动端适配，深色主题
 
 ---
 
-## 配置
+## 快速开始
 
-### 1. 获取 Remove.bg API Key
-
-注册 https://www.remove.bg/api 免费版，每月 50 次调用。
-
-### 2. 设置环境变量
-
-```bash
-# 方式一：部署时
-wrangler secret put REMOVE_BG_API_KEY
-# 输入你的 API Key
-
-# 方式二：直接在 wrangler.toml 填（不推荐用于生产）
-```
-
-### 3. 安装并部署
+### 1. 安装依赖
 
 ```bash
 npm install
-npx wrangler deploy
 ```
 
-部署完成后会给你一个 `*.workers.dev` 域名，或者绑定你自己的域名。
+### 2. 配置环境变量
 
----
-
-## 本地开发
+复制 `.env.example` 为 `.env.local`，填入你的 Remove.bg API Key：
 
 ```bash
-npm install
-npx wrangler dev
-# 访问 http://localhost:8787
+cp .env.example .env.local
+# 编辑 .env.local，填入 REMOVE_BG_API_KEY
 ```
 
-本地调试需要先设置 `REMOVE_BG_API_KEY`：
+**获取 API Key：** https://www.remove.bg/api
+
+### 3. 本地运行
 
 ```bash
-wrangler secret put REMOVE_BG_API_KEY
-npx wrangler dev
+npm run dev
 ```
+
+打开 http://localhost:3000
+
+### 4. 部署到 Vercel
+
+```bash
+npm install -g vercel
+vercel
+```
+
+或连接 GitHub 实现自动部署，然后通过 Vercel Dashboard 配置环境变量 `REMOVE_BG_API_KEY`。
+
+### 4. 部署到 Cloudflare Pages
+
+1. Push 到 GitHub
+2. 在 Cloudflare Pages 新建项目，连接 GitHub 仓库
+3. 构建命令：`npm run build`，输出目录：`\.next`
+4. 在 Pages 设置中添加环境变量 `REMOVE_BG_API_KEY`
 
 ---
 
 ## 项目结构
 
 ```
-bg-remover/
-├── wrangler.toml      # Cloudflare Workers 配置
-├── src/
-│   └── index.js       # Worker 主逻辑（页面 + API 代理）
+src/
+├── app/
+│   ├── api/
+│   │   └── remove-bg/
+│   │       └── route.ts    # Remove.bg API 代理
+│   ├── globals.css
+│   ├── layout.tsx
+│   └── page.tsx            # 主页面
+├── .env.example            # 环境变量示例
+├── next.config.ts
+├── package.json
 └── README.md
 ```
 
 ---
 
-## 已知限制
+## 限制
 
-- Remove.bg 免费版每月 50 次，适合小规模试用
-- 图片大小限制：Remove.bg API 最大 10MB
-- Cloudflare Workers 免费版请求 body 最大 1MB；付费版最大 100MB
-
----
-
-## 后续可扩展
-
-- [ ] 接入其他背景移除模型（自托管 U2Net / RMBG-1.4，省 API 费用）
-- [ ] 批量处理
-- [ ] 历史记录（可选，用户自己保存）
-- [ ] 接入 Stripe 付费
+| 维度 | 限制 |
+|------|------|
+| 单文件大小 | ≤ 10MB |
+| 支持格式 | JPG / PNG / WebP |
+| 免费调用量 | 50次/月（Remove.bg 免费版）|
