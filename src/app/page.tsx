@@ -4,6 +4,36 @@ import { useState, useRef, useCallback, useEffect } from "react";
 
 type ProcessingState = "idle" | "loading" | "success" | "error";
 
+// Remove.bg API 直接调用（前端代理，MVP 用途）
+const REMOVE_BG_API_KEY = process.env.NEXT_PUBLIC_REMOVE_BG_API_KEY || "";
+
+async function callRemoveBgApi(file: File): Promise<Blob> {
+  const formData = new FormData();
+  formData.append("image_file", file);
+  formData.append("size", "auto");
+  formData.append("format", "png");
+
+  const res = await fetch("https://api.remove.bg/v1.0/removebg", {
+    method: "POST",
+    headers: {
+      "X-Api-Key": REMOVE_BG_API_KEY,
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    let msg = `错误 ${res.status}`;
+    try {
+      const json = JSON.parse(text);
+      msg = json.errors?.[0]?.detail || json.errors?.[0]?.title || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+
+  return res.blob();
+}
+
 export default function HomePage() {
   const [state, setState] = useState<ProcessingState>("idle");
   const [errorMsg, setErrorMsg] = useState<string>("");
@@ -44,34 +74,13 @@ export default function HomePage() {
     resultDataRef.current = null;
 
     try {
-      const formData = new FormData();
-      formData.append("image", file);
-
-      const res = await fetch("/api/remove-bg", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        let msg = `错误 ${res.status}`;
-        try {
-          const json = await res.json();
-          msg = json.error || msg;
-        } catch {
-          msg = await res.text() || msg;
-        }
-        setErrorMsg(msg);
-        setState("error");
-        return;
-      }
-
-      const blob = await res.blob();
+      const blob = await callRemoveBgApi(file);
       resultDataRef.current = blob;
       const url = URL.createObjectURL(blob);
       setResultPreview(url);
       setState("success");
     } catch (err) {
-      setErrorMsg("网络错误，请检查网络后重试");
+      setErrorMsg(err instanceof Error ? err.message : "网络错误，请检查网络后重试");
       setState("error");
     }
   }, []);
@@ -87,6 +96,7 @@ export default function HomePage() {
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
+      e.stopPropagation();
       setIsDragging(false);
       const file = e.dataTransfer.files[0];
       if (file) handleFile(file);
@@ -96,13 +106,32 @@ export default function HomePage() {
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(true);
   }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
   }, []);
+
+  // 全局拖拽事件，防止文件拖到页面空白处丢失
+  useEffect(() => {
+    const onWindowDragOver = (e: DragEvent) => e.preventDefault();
+    const onWindowDrop = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const file = e.dataTransfer?.files[0];
+      if (file) handleFile(file);
+    };
+    window.addEventListener("dragover", onWindowDragOver);
+    window.addEventListener("drop", onWindowDrop);
+    return () => {
+      window.removeEventListener("dragover", onWindowDragOver);
+      window.removeEventListener("drop", onWindowDrop);
+    };
+  }, [handleFile]);
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -135,7 +164,7 @@ export default function HomePage() {
       {/* 标题 */}
       <div className="text-center mb-8">
         <h1 className="text-3xl font-semibold text-white mb-1">🖼️ 图片背景移除</h1>
-        <p className="text-sm text-neutral-500">Remove.bg · Next.js</p>
+        <p className="text-sm text-neutral-500">Remove.bg · Cloudflare Pages</p>
       </div>
 
       {/* 拖拽上传区 */}
@@ -175,7 +204,7 @@ export default function HomePage() {
           ref={fileInputRef}
           type="file"
           accept="image/jpeg,image/png,image/webp"
-          className="hidden"
+          className="fixed -translate-x-full opacity-0 pointer-events-none"
           onChange={handleInputChange}
           disabled={state === "loading"}
         />
@@ -206,10 +235,9 @@ export default function HomePage() {
               <img
                 src={resultPreview}
                 alt="已移除背景"
-                className="max-w-56 max-h-56 rounded-xl border border-neutral-800 object-contain bg-checkered"
+                className="max-w-56 max-h-56 rounded-xl border border-neutral-800 object-contain"
                 style={{
-                  backgroundImage:
-                    "repeating-conic-gradient(#2a2a2a 0% 25%, #1a1a1a 0% 50%)",
+                  backgroundImage: "repeating-conic-gradient(#2a2a2a 0% 25%, #1a1a1a 0% 50%)",
                   backgroundSize: "16px 16px",
                 }}
               />
