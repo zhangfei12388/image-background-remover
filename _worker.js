@@ -3,19 +3,14 @@
  * Handles /api/* routes, proxies everything else to Next.js static files
  */
 
-const GOOGLE_CLIENT_ID = "691307021131-i04l8i4allgkh8e5ie8mr6psu2rhso7m.apps.googleusercontent.com";
-const GOOGLE_CLIENT_SECRET = "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";
 const CALLBACK_URL = "https://remove-bakg-img.bond/api/callback";
-const DB_ID = "d411d4dc-c771-48de-8c2a-483fc2885448";
-const ACCOUNT_ID = "83a564d726574071461bc9ea2605d6d1";
-const API_TOKEN = "cfat_c1KVkBJ2iMKE9IhEYUKAa2L0X6R80NIbV6AGP3857eac9036";
 
 async function queryDB(sql, params = []) {
   const res = await fetch(
-    `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/d1/database/${DB_ID}/query`,
+    `https://api.cloudflare.com/client/v4/accounts/${globalThis.ACCOUNT_ID}/d1/database/${globalThis.DB_ID}/query`,
     {
       method: "POST",
-      headers: { Authorization: `Bearer ${API_TOKEN}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${globalThis.CLOUDFLARE_API_TOKEN}`, "Content-Type": "application/json" },
       body: JSON.stringify({ sql, params }),
     }
   );
@@ -28,7 +23,7 @@ async function handleApi(path, request) {
   if (path === "/api/auth/google" || path === "/api/login") {
     const state = crypto.randomUUID();
     const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
-    url.searchParams.set("client_id", GOOGLE_CLIENT_ID);
+    url.searchParams.set("client_id", globalThis.GOOGLE_CLIENT_ID);
     url.searchParams.set("redirect_uri", CALLBACK_URL);
     url.searchParams.set("response_type", "code");
     url.searchParams.set("scope", "openid email profile");
@@ -48,8 +43,8 @@ async function handleApi(path, request) {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
-        client_id: GOOGLE_CLIENT_ID,
-        client_secret: GOOGLE_CLIENT_SECRET,
+        client_id: globalThis.GOOGLE_CLIENT_ID,
+        client_secret: globalThis.GOOGLE_CLIENT_SECRET,
         code,
         grant_type: "authorization_code",
         redirect_uri: CALLBACK_URL,
@@ -118,12 +113,10 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // Handle API routes
     if (path.startsWith("/api/")) {
       return handleApi(path, request);
     }
 
-    // For all other routes, serve the Next.js static site
     return fetch(request);
   },
 };
