@@ -30,7 +30,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build
-        run: pnpm run build && cp -r functions wrangler.toml _headers .next/
+        run: pnpm run build && cp -r functions wrangler.toml .next/
         env:
           NEXT_PUBLIC_REMOVE_BG_API_KEY: ${{ secrets.REMOVE_BG_API_KEY }}
 
