@@ -36,15 +36,15 @@ jobs:
 
       - name: Set Worker secrets
         run: |
-          echo "${{ secrets.GOOGLE_CLIENT_ID }}" | npx wrangler secret put GOOGLE_CLIENT_ID --project-name image-background-remover --message "Google OAuth Client ID"
-          echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" | npx wrangler secret put GOOGLE_CLIENT_SECRET --project-name image-background-remover --message "Google OAuth Client Secret"
-          echo "${{ secrets.CLOUDFLARE_API_TOKEN }}" | npx wrangler secret put CLOUDFLARE_API_TOKEN --project-name image-background-remover --message "Cloudflare API Token"
+          echo "${{ secrets.GOOGLE_CLIENT_ID }}" | npx wrangler pages secret put GOOGLE_CLIENT_ID --name image-background-remover
+          echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" | npx wrangler pages secret put GOOGLE_CLIENT_SECRET --name image-background-remover
+          echo "${{ secrets.CLOUDFLARE_API_TOKEN }}" | npx wrangler pages secret put CLOUDFLARE_API_TOKEN --name image-background-remover
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: 83a564d726574071461bc9ea2605d6d1
 
       - name: Deploy with wrangler
-        run: npx wrangler pages deploy .next --project-name image-background-remover --commit-message "${{ github.event.head_commit.message }}"
+        run: npx wrangler pages deploy .next --name image-background-remover --commit-message "${{ github.event.head_commit.message }}"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: 83a564d726574071461bc9ea2605d6d1
