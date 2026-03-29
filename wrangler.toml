@@ -2,6 +2,11 @@ name = "image-background-remover"
 compatibility_date = "2026-03-29"
 pages_build_output_dir = ".next"
 
+[[d1_databases]]
+binding = "DB"
+database_name = "image-bg-remover-db"
+database_id = "d411d4dc-c771-48de-8c2a-483fc2885448"
+
 [vars]
 DB_ID = "d411d4dc-c771-48de-8c2a-483fc2885448"
 ACCOUNT_ID = "83a564d726574071461bc9ea2605d6d1"

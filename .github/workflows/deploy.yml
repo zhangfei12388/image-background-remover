@@ -30,21 +30,16 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build
-        run: pnpm run build
+        run: pnpm run build && cp -r functions wrangler.toml _headers .next/
         env:
           NEXT_PUBLIC_REMOVE_BG_API_KEY: ${{ secrets.REMOVE_BG_API_KEY }}
 
-      - name: Set Worker secrets
-        run: |
-          echo "${{ secrets.GOOGLE_CLIENT_ID }}" | npx wrangler pages secret put GOOGLE_CLIENT_ID --name image-background-remover
-          echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" | npx wrangler pages secret put GOOGLE_CLIENT_SECRET --name image-background-remover
-          echo "${{ secrets.CLOUDFLARE_API_TOKEN }}" | npx wrangler pages secret put CLOUDFLARE_API_TOKEN --name image-background-remover
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: 83a564d726574071461bc9ea2605d6d1
-
-      - name: Deploy with wrangler
-        run: npx wrangler pages deploy .next --name image-background-remover --commit-message "${{ github.event.head_commit.message }}"
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: 83a564d726574071461bc9ea2605d6d1
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: 83a564d726574071461bc9ea2605d6d1
+          projectName: image-background-remover
+          directory: .next
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          wranglerVersion: 3
