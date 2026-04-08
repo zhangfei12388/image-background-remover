@@ -1,88 +1,75 @@
-# 🖼️ 图片背景移除
+# 🖼️ Image Background Remover
 
-> 基于 Next.js + Tailwind CSS + Remove.bg API 的图片背景移除工具。
+一键移除图片背景，支持透明PNG下载。
 
-**技术栈：**
-- 前端：Next.js 15 (App Router) + Tailwind CSS
-- 后端：Next.js API Routes
-- AI 能力：Remove.bg API
-- 部署：Vercel / Cloudflare Pages
+## 功能特性
 
-**特点：**
-- 拖拽上传，即时预览
-- 纯内存处理，不做任何存储
-- 移动端适配，深色主题
+- ✅ 拖拽/点击上传图片
+- ✅ AI 自动移除背景（Remove.bg API）
+- ✅ 透明PNG下载
+- ✅ 积分系统（首次登录赠送3积分）
+- ✅ PayPal 支付充值
+- ✅ Google 账号登录
+- ✅ 纯内存处理，无持久化存储
 
----
+## 技术栈
 
-## 快速开始
+- **框架**: Next.js 15 + React 19
+- **样式**: Tailwind CSS 4
+- **部署**: Cloudflare Pages
+- **数据库**: Cloudflare D1
+- **AI**: Remove.bg API
+- **支付**: PayPal
 
-### 1. 安装依赖
+## 积分包
+
+| 积分 | 价格 | 单张成本 |
+|------|------|----------|
+| 10 | $0.99 | $0.099/张 |
+| 50 | $3.99 | $0.080/张 |
+| 100 | $6.99 | $0.070/张 |
+| 500 | $29.99 | $0.060/张 |
+
+## 本地开发
 
 ```bash
-npm install
-```
+# 安装依赖
+pnpm install
 
-### 2. 配置环境变量
-
-复制 `.env.example` 为 `.env.local`，填入你的 Remove.bg API Key：
-
-```bash
+# 复制环境变量
 cp .env.example .env.local
-# 编辑 .env.local，填入 REMOVE_BG_API_KEY
+# 编辑 .env.local 填入实际值
+
+# 启动开发服务器
+pnpm dev
 ```
 
-**获取 API Key：** https://www.remove.bg/api
+## 环境变量
 
-### 3. 本地运行
+```env
+CLOUDFLARE_ACCOUNT_ID=        # Cloudflare Account ID
+DB_ID=                        # Cloudflare D1 Database ID
+CLOUDFLARE_API_TOKEN=         # Cloudflare API Token
+NEXT_PUBLIC_REMOVE_BG_API_KEY= # Remove.bg API Key
+PAYPAL_SANDBOX_CLIENT_ID=     # PayPal SandBox Client ID
+PAYPAL_SANDBOX_CLIENT_SECRET= # PayPal SandBox Client Secret
+```
+
+## 数据库迁移
 
 ```bash
-npm run dev
+# 运行迁移
+wrangler d1 execute image-bg-remover-db --file=migrations/001_create_credits.sql --remote
 ```
 
-打开 http://localhost:3000
+## 部署
 
-### 4. 部署到 Vercel
+推送到 `master` 分支自动触发部署：
 
 ```bash
-npm install -g vercel
-vercel
+git push origin master
 ```
 
-或连接 GitHub 实现自动部署，然后通过 Vercel Dashboard 配置环境变量 `REMOVE_BG_API_KEY`。
+## License
 
-### 4. 部署到 Cloudflare Pages
-
-1. Push 到 GitHub
-2. 在 Cloudflare Pages 新建项目，连接 GitHub 仓库
-3. 构建命令：`npm run build`，输出目录：`\.next`
-4. 在 Pages 设置中添加环境变量 `REMOVE_BG_API_KEY`
-
----
-
-## 项目结构
-
-```
-src/
-├── app/
-│   ├── api/
-│   │   └── remove-bg/
-│   │       └── route.ts    # Remove.bg API 代理
-│   ├── globals.css
-│   ├── layout.tsx
-│   └── page.tsx            # 主页面
-├── .env.example            # 环境变量示例
-├── next.config.ts
-├── package.json
-└── README.md
-```
-
----
-
-## 限制
-
-| 维度 | 限制 |
-|------|------|
-| 单文件大小 | ≤ 10MB |
-| 支持格式 | JPG / PNG / WebP |
-| 免费调用量 | 50次/月（Remove.bg 免费版）|
+MIT

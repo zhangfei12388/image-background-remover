@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import TopUpModal from "@/components/TopUpModal";
 
 type ProcessingState = "idle" | "loading" | "success" | "error";
 type AuthState = "loading" | "logged_out" | "logged_in";
@@ -42,22 +43,37 @@ export default function HomePage() {
   const [isDragging, setIsDragging] = useState(false);
   const [auth, setAuth] = useState<AuthState>("loading");
   const [user, setUser] = useState<{ email: string; name: string; picture?: string } | null>(null);
+  const [credits, setCredits] = useState<number | null>(null);
+  const [showTopUp, setShowTopUp] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const resultDataRef = useRef<Blob | null>(null);
 
-  useEffect(() => {
-    fetch("/api/me")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.authenticated) {
-          setAuth("logged_in");
-          setUser(data.user);
-        } else {
-          setAuth("logged_out");
-        }
-      })
-      .catch(() => setAuth("logged_out"));
+  // 获取用户信息和积分
+  const fetchUserAndCredits = useCallback(async () => {
+    try {
+      const [authRes, creditsRes] = await Promise.all([
+        fetch("/api/auth/me"),
+        fetch("/api/credits"),
+      ]);
+      
+      const authData = await authRes.json();
+      const creditsData = await creditsRes.json();
+
+      if (authData.authenticated) {
+        setAuth("logged_in");
+        setUser(authData.user);
+        setCredits(creditsData.credits ?? 0);
+      } else {
+        setAuth("logged_out");
+      }
+    } catch {
+      setAuth("logged_out");
+    }
   }, []);
+
+  useEffect(() => {
+    fetchUserAndCredits();
+  }, [fetchUserAndCredits]);
 
   const reset = useCallback(() => {
     setState("idle");
@@ -69,6 +85,11 @@ export default function HomePage() {
   }, []);
 
   const processFile = useCallback(async (file: File) => {
+    if (credits !== null && credits <= 0) {
+      setShowTopUp(true);
+      return;
+    }
+
     if (!file.type.startsWith("image/")) {
       setErrorMsg("请选择图片文件");
       setState("error");
@@ -95,11 +116,15 @@ export default function HomePage() {
       const url = URL.createObjectURL(blob);
       setResultPreview(url);
       setState("success");
+      // 扣除积分
+      if (credits !== null) {
+        setCredits((c) => (c !== null ? c - 1 : null));
+      }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "网络错误，请检查网络后重试");
       setState("error");
     }
-  }, []);
+  }, [credits]);
 
   const handleFile = useCallback(
     (file: File) => {
@@ -166,6 +191,10 @@ export default function HomePage() {
     URL.revokeObjectURL(url);
   }, []);
 
+  const handleTopUpSuccess = useCallback((newCredits: number) => {
+    setCredits((c) => (c !== null ? c + newCredits : newCredits));
+  }, []);
+
   useEffect(() => {
     return () => {
       if (resultPreview) URL.revokeObjectURL(resultPreview);
@@ -212,35 +241,65 @@ export default function HomePage() {
 
   return (
     <main className="flex-1 flex flex-col items-center justify-center px-4 py-10 max-w-2xl mx-auto w-full">
-      <div className="absolute top-4 right-4 flex items-center gap-3">
-        {user?.picture && (
-          <img src={user.picture} alt="avatar" className="w-8 h-8 rounded-full" />
-        )}
-        <div className="text-right">
-          <p className="text-xs text-neutral-400">{user?.email}</p>
+      {/* 顶部导航 - 用户信息和积分 */}
+      <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {user?.picture && (
+            <img src={user.picture} alt="avatar" className="w-8 h-8 rounded-full" />
+          )}
+          <div>
+            <p className="text-xs text-neutral-400">{user?.email}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 bg-neutral-900/80 border border-neutral-800 rounded-full px-4 py-2">
+            <span className="text-sm text-neutral-400">积分:</span>
+            <span className="text-sm font-semibold text-white">{credits ?? "-"}</span>
+            <button
+              onClick={() => setShowTopUp(true)}
+              className="text-xs text-blue-400 hover:text-blue-300 font-medium ml-2"
+            >
+              充值
+            </button>
+          </div>
+
           <a href="/api/logout" className="text-xs text-red-400 hover:text-red-300">退出</a>
         </div>
       </div>
 
-      <div className="text-center mb-8">
+      <div className="text-center mb-8 mt-8">
         <h1 className="text-3xl font-semibold text-white mb-1">🖼️ 图片背景移除</h1>
-        <p className="text-sm text-neutral-500">Remove.bg · Cloudflare Pages</p>
+        <p className="text-sm text-neutral-500">Remove.bg · 每次处理消耗 1 积分</p>
       </div>
 
       <div
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => {
+          if (credits !== null && credits <= 0) {
+            setShowTopUp(true);
+          } else {
+            fileInputRef.current?.click();
+          }
+        }}
         className={`
           w-full rounded-2xl border-2 border-dashed cursor-pointer
           transition-all duration-200 text-center
           ${isDragging ? "border-neutral-500 bg-neutral-900" : "border-neutral-700 bg-neutral-900/60 hover:border-neutral-500 hover:bg-neutral-900"}
           ${state === "loading" ? "pointer-events-none opacity-60" : ""}
+          ${credits !== null && credits <= 0 ? "opacity-60 cursor-not-allowed" : ""}
         `}
       >
         <div className="py-14 px-6">
-          {state !== "loading" ? (
+          {credits !== null && credits <= 0 ? (
+            <p className="text-yellow-500 text-base">
+              积分不足，请先充值
+              <br />
+              <span className="text-neutral-600 text-sm">点击此处充值</span>
+            </p>
+          ) : state !== "loading" ? (
             <>
               <p className="text-neutral-400 text-base leading-relaxed">
                 拖拽图片到这里
@@ -305,6 +364,14 @@ export default function HomePage() {
       <footer className="mt-16 text-xs text-neutral-700 text-center">
         图片仅在内存中处理，不做任何存储
       </footer>
+
+      {/* 充值弹窗 */}
+      <TopUpModal
+        isOpen={showTopUp}
+        onClose={() => setShowTopUp(false)}
+        onSuccess={handleTopUpSuccess}
+        isSandbox={true}
+      />
     </main>
   );
 }
