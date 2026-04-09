@@ -35,7 +35,7 @@ jobs:
         run: |
           cp -r functions wrangler.toml .next/
           npx wrangler pages deploy .next \
-            --project-name=image-background-remover \
+            --project-name=image-bg-remover \
             --branch=production \
             --commit-message="${{ github.event.head_commit.message }}" \
             --commit-dirty=true
