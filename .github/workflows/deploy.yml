@@ -30,14 +30,3 @@ jobs:
         run: pnpm run build
         env:
           NEXT_PUBLIC_REMOVE_BG_API_KEY: ${{ secrets.REMOVE_BG_API_KEY }}
-
-      - name: Deploy to Cloudflare Pages (production)
-        run: |
-          cp wrangler.toml .next/
-          npx wrangler pages deploy .next \
-            --project-name=image-bg-remover \
-            --branch=production \
-            --commit-message="${{ github.event.head_commit.message }}"
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: 83a564d726574071461bc9ea2605d6d1
