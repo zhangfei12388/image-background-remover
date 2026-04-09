@@ -48,13 +48,14 @@ export async function GET(request: Request) {
         email: userInfo.email,
         name: userInfo.name,
         picture: userInfo.picture,
+        lastLogin: new Date(),
       },
       create: {
         googleId: userInfo.id,
         email: userInfo.email,
         name: userInfo.name,
         picture: userInfo.picture,
-        credits: 100, // 新用户默认100积分
+        credits: 100,
       },
     });
 
@@ -70,9 +71,9 @@ export async function GET(request: Request) {
       secure: true,
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24 * 30, // 30 天
+      maxAge: 60 * 60 * 24 * 30,
     });
-    response.cookies.set("user_id", user.id, { path: "/", maxAge: 60 * 60 * 24 * 30 });
+    response.cookies.set("user_id", user.id.toString(), { path: "/", maxAge: 60 * 60 * 24 * 30 });
     response.cookies.set("user_email", user.email, { path: "/", maxAge: 60 * 60 * 24 * 30 });
     response.cookies.set("user_name", user.name || "", { path: "/", maxAge: 60 * 60 * 24 * 30 });
     response.cookies.set("user_picture", user.picture || "", { path: "/", maxAge: 60 * 60 * 24 * 30 });

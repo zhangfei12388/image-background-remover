@@ -7,14 +7,24 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        Int       @id @default(autoincrement())
+  googleId  String    @unique @map("google_id")
+  email     String    @unique
   name      String?
   picture   String?
-  googleId  String   @unique
-  credits   Int      @default(100)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  credits   Int       @default(100)
+  createdAt DateTime  @default(now()) @map("created_at")
+  lastLogin DateTime? @map("last_login")
 
   @@map("users")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       Int      @map("user_id")
+  token        String   @unique
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("sessions")
 }
