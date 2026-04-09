@@ -4,8 +4,6 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 model User {
@@ -14,7 +12,7 @@ model User {
   name      String?
   picture   String?
   googleId  String   @unique
-  credits   Int      @default(100)  // 默认100积分
+  credits   Int      @default(100)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
