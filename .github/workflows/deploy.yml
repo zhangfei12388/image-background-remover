@@ -31,11 +31,13 @@ jobs:
         env:
           NEXT_PUBLIC_REMOVE_BG_API_KEY: ${{ secrets.REMOVE_BG_API_KEY }}
 
+      - name: Setup routes
+        run: |
+          echo '{"version":1,"include":["/*"],"exclude":["/_next/*"]}' > .next/_routes.json
+
       - name: Deploy to Cloudflare Pages
         run: |
-          # 复制 wrangler.toml 到构建输出目录
           cp wrangler.toml .next/
-          # 使用 wrangler 部署，强制上传 Functions
           npx wrangler pages deploy .next \
             --project-name=image-bg-remover \
             --branch=production \
