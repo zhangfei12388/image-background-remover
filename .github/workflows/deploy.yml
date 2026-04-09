@@ -33,7 +33,7 @@ jobs:
 
       - name: Deploy to Cloudflare Pages (production)
         run: |
-          cp -r functions wrangler.toml .next/
+          cp wrangler.toml .next/
           npx wrangler pages deploy .next \
             --project-name=image-bg-remover \
             --branch=production \
